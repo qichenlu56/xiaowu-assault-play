@@ -1,0 +1,66 @@
+{
+ "stages": {},
+ "hero_a": {
+  "file": "hero_a.png",
+  "frames": 6,
+  "frameWidth": 113,
+  "frameHeight": 133,
+  "anchor": "bottom-center"
+ },
+ "hero_run": {
+  "file": "hero_run.png",
+  "frames": 8,
+  "frameWidth": 100,
+  "frameHeight": 135,
+  "anchor": "bottom-center"
+ },
+ "hero_shoot": {
+  "file": "hero_shoot.png",
+  "frames": 6,
+  "frameWidth": 119,
+  "frameHeight": 150,
+  "anchor": "bottom-center"
+ },
+ "hero_crouch": {
+  "file": "hero_crouch.png",
+  "frames": 5,
+  "frameWidth": 99,
+  "frameHeight": 84,
+  "anchor": "bottom-center"
+ },
+ "hero_act": {
+  "file": "hero_act.png",
+  "frames": 6,
+  "frameWidth": 123,
+  "frameHeight": 158,
+  "anchor": "bottom-center"
+ },
+ "hero_c": {
+  "file": "hero_c.png",
+  "frames": 6,
+  "frameWidth": 176,
+  "frameHeight": 186,
+  "anchor": "bottom-center"
+ },
+ "shots": {
+  "file": "shots.png",
+  "frames": 6,
+  "frameWidth": 67,
+  "frameHeight": 60,
+  "anchor": "center"
+ },
+ "eshots": {
+  "file": "eshots.png",
+  "frames": 6,
+  "frameWidth": 82,
+  "frameHeight": 68,
+  "anchor": "center"
+ },
+ "explosion": {
+  "file": "explosion.png",
+  "frames": 6,
+  "frameWidth": 212,
+  "frameHeight": 204,
+  "anchor": "center"
+ }
+}

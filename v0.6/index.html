@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="zh">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>小屋突击</title>
+    <link rel="icon" href="data:," />
+    <style>html,body{background:#000;height:100%;margin:0;font-family:PingFang SC,Microsoft YaHei,Noto Sans CJK SC,sans-serif;overflow:hidden}#game{width:100%;height:100%}canvas{image-rendering:pixelated}#scanlines{pointer-events:none;z-index:5;background:repeating-linear-gradient(#0000 0 2px,#0000002e 3px 3px);display:none;position:fixed;inset:0}#scanlines.on{display:block}#gear{z-index:10;color:#fff;cursor:pointer;background:#0009;border:1px solid #888;border-radius:6px;padding:6px 10px;font-size:15px;position:fixed;top:10px;right:10px}#settings{z-index:10;color:#eee;background:#141418f2;border:1px solid #666;border-radius:8px;width:250px;padding:14px 16px;font-size:15px;line-height:2;position:fixed;top:50px;right:10px}#settings h3{margin:0 0 6px;font-size:17px}#settings label{justify-content:space-between;align-items:center;gap:8px;display:flex}#settings input[type=range]{width:120px}#settings button{cursor:pointer;width:100%;margin-top:6px;padding:6px;font-size:15px}#settings .tip{color:#aaa;margin-top:6px;font-size:13px;line-height:1.5}</style>
+    <script type="module" crossorigin src="./assets/index-B7RzDlJx.js"></script>
+  </head>
+  <body>
+    <div id="game"></div>
+    <div id="scanlines"></div>
+    <button id="gear" type="button">⚙ 设置</button>
+    <div id="settings" hidden>
+      <h3>设置</h3>
+      <label>震屏强度 <input id="set-shake" type="range" min="0" max="100" step="5" /> <span id="set-shake-v"></span></label>
+      <label>减少闪烁 <input id="set-flash" type="checkbox" /></label>
+      <label>扫描线 <input id="set-scan" type="checkbox" /></label>
+      <button id="set-arena" type="button">怪物试炼场</button>
+      <button id="set-boss" type="button">直接打 Boss</button>
+      <button id="set-close" type="button">关闭</button>
+      <div class="tip">← → 走，K 跳，↓ 蹲，↑ 朝上瞄，J 射击，L 手鼓雷。三轮：站在车旁按 ↓ 或跳到车上就上车，↓ + K 下车；车上 J 机枪、L 手鼓炮。三条命用光后按 Enter 续关。按 0 进 / 出「怪物试炼场」：1 骰盅怪、2 酒瓶莽夫、3 外放音箱、4 直播无人机、5 卡座保安、6 放一辆三轮，C 清场。Esc 打开 / 关闭设置。</div>
+    </div>
+  </body>
+</html>

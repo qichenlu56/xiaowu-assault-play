@@ -1,0 +1,210 @@
+{
+ "stages": {
+  "lijiang": {
+   "type": "horizontal",
+   "groundY": 490,
+   "layers": [
+    {
+     "file": "lijiang_far.png",
+     "width": 1620,
+     "height": 540,
+     "y": 0,
+     "scroll": 0.15,
+     "说明": "远景: 天空和远山, 铺满全屏"
+    },
+    {
+     "file": "lijiang_mid.png",
+     "width": 1620,
+     "height": 405,
+     "y": 75,
+     "scroll": 0.55,
+     "说明": "中景: 房屋一排, 底边压在地面条上沿"
+    },
+    {
+     "file": "lijiang_ground.png",
+     "width": 1620,
+     "height": 66,
+     "y": 474,
+     "scroll": 1.0,
+     "说明": "地面条: 和玩法同速"
+    },
+    {
+     "file": "lijiang_fg.png",
+     "width": 1620,
+     "height": 540,
+     "y": 0,
+     "scroll": 1.35,
+     "front": true,
+     "说明": "前景剪影: 画在角色前面, 比玩法滚得快"
+    }
+   ]
+  }
+ },
+ "hero_a": {
+  "file": "hero_a.png",
+  "frames": 6,
+  "frameWidth": 113,
+  "frameHeight": 133,
+  "anchor": "bottom-center"
+ },
+ "hero_run": {
+  "file": "hero_run.png",
+  "frames": 8,
+  "frameWidth": 100,
+  "frameHeight": 135,
+  "anchor": "bottom-center"
+ },
+ "hero_shoot": {
+  "file": "hero_shoot.png",
+  "frames": 6,
+  "frameWidth": 119,
+  "frameHeight": 150,
+  "anchor": "bottom-center"
+ },
+ "hero_crouch": {
+  "file": "hero_crouch.png",
+  "frames": 5,
+  "frameWidth": 99,
+  "frameHeight": 84,
+  "anchor": "bottom-center"
+ },
+ "hero_act": {
+  "file": "hero_act.png",
+  "frames": 6,
+  "frameWidth": 123,
+  "frameHeight": 158,
+  "anchor": "bottom-center"
+ },
+ "hero_c": {
+  "file": "hero_c.png",
+  "frames": 6,
+  "frameWidth": 176,
+  "frameHeight": 186,
+  "anchor": "bottom-center"
+ },
+ "shots": {
+  "file": "shots.png",
+  "frames": 6,
+  "frameWidth": 67,
+  "frameHeight": 60,
+  "anchor": "center"
+ },
+ "eshots": {
+  "file": "eshots.png",
+  "frames": 6,
+  "frameWidth": 82,
+  "frameHeight": 68,
+  "anchor": "center"
+ },
+ "explosion": {
+  "file": "explosion.png",
+  "frames": 6,
+  "frameWidth": 212,
+  "frameHeight": 204,
+  "anchor": "center"
+ },
+ "props": {
+  "separate": [
+   {
+    "file": "props_0.png",
+    "width": 99,
+    "height": 148
+   },
+   {
+    "file": "props_1.png",
+    "width": 158,
+    "height": 86
+   },
+   {
+    "file": "props_2.png",
+    "width": 158,
+    "height": 170
+   },
+   {
+    "file": "props_3.png",
+    "width": 154,
+    "height": 148
+   },
+   {
+    "file": "props_4.png",
+    "width": 156,
+    "height": 83
+   },
+   {
+    "file": "props_5.png",
+    "width": 105,
+    "height": 158
+   }
+  ]
+ },
+ "pickups": {
+  "file": "pickups.png",
+  "frames": 6,
+  "frameWidth": 63,
+  "frameHeight": 68,
+  "anchor": "center"
+ },
+ "pow": {
+  "file": "pow.png",
+  "frames": 4,
+  "frameWidth": 104,
+  "frameHeight": 122,
+  "anchor": "bottom-center"
+ },
+ "dicer": {
+  "file": "dicer.png",
+  "frames": 6,
+  "frameWidth": 147,
+  "frameHeight": 129,
+  "anchor": "bottom-center"
+ },
+ "dicer_x": {
+  "file": "dicer_x.png",
+  "frames": 4,
+  "frameWidth": 145,
+  "frameHeight": 101,
+  "anchor": "bottom-center"
+ },
+ "bottle": {
+  "file": "bottle.png",
+  "frames": 6,
+  "frameWidth": 147,
+  "frameHeight": 128,
+  "anchor": "bottom-center"
+ },
+ "bottle_x": {
+  "file": "bottle_x.png",
+  "frames": 4,
+  "frameWidth": 138,
+  "frameHeight": 127,
+  "anchor": "bottom-center"
+ },
+ "shield": {
+  "file": "shield.png",
+  "frames": 6,
+  "frameWidth": 182,
+  "frameHeight": 177,
+  "anchor": "bottom-center"
+ },
+ "shield_x": {
+  "file": "shield_x.png",
+  "frames": 4,
+  "frameWidth": 169,
+  "frameHeight": 113,
+  "anchor": "bottom-center"
+ },
+ "speaker": {
+  "file": "speaker.png",
+  "frames": 5,
+  "frameWidth": 102,
+  "frameHeight": 121,
+  "anchor": "bottom-center"
+ },
+ "drone": {
+  "file": "drone.png",
+  "frames": 5,
+  "frameWidth": 86,
+  "frameHeight": 109,
+  "anchor": "top-center"
+ }
+}

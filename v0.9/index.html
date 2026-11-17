@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="zh">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="theme-color" content="#000000" />
+    <title>小屋突击</title>
+    <link rel="icon" href="data:," />
+    <style>html,body{touch-action:none;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;background:#000;height:100%;margin:0;font-family:PingFang SC,Microsoft YaHei,Noto Sans CJK SC,sans-serif;overflow:hidden}:root{--gutter:0px}#game{position:fixed;inset:0}body.touch #game{left:var(--gutter);right:var(--gutter)}canvas{image-rendering:pixelated;display:block}body.crt #game canvas{filter:url(#crt-curve);border-radius:14px}#scanlines{pointer-events:none;z-index:5;background:repeating-linear-gradient(#0000 0 2px,#0003 3px 3px);display:none;position:fixed;inset:0}body.touch #scanlines,body.touch #vignette{left:var(--gutter);right:var(--gutter)}#scanlines.on{display:block}#vignette{pointer-events:none;z-index:6;background:radial-gradient(#0000 58%,#00000047 80%,#000000b8 100%);display:none;position:fixed;inset:0}#vignette.on{display:block}#gear{z-index:10;color:#fff;cursor:pointer;background:#0009;border:1px solid #888;border-radius:6px;padding:6px 10px;font-size:15px;position:fixed;top:10px;right:10px}body.touch #gear{display:none}#mute-ind{z-index:10;color:#fff;background:#0009;border-radius:6px;padding:4px 8px;font-size:14px;position:fixed;top:12px;right:96px}body.touch #mute-ind{right:auto;left:calc(var(--gutter) + 8px)}#pause{z-index:20;color:#eee;background:#000000c7;justify-content:center;align-items:center;display:flex;position:fixed;inset:0;overflow:auto}#pause[hidden]{display:none}#pause .box{box-sizing:border-box;background:#14141af7;border:2px solid #c9a227;border-radius:10px;width:calc(100% - 40px);max-width:880px;max-height:calc(100% - 30px);padding:14px 18px;overflow:auto}#pause h2{color:#ffd23a;text-align:center;letter-spacing:4px;margin:0 0 8px;font-size:26px}#pause .cols{flex-wrap:wrap;gap:18px;display:flex}#pause .col{flex:300px;min-width:260px}#pause h3{color:#ffe9a0;margin:6px 0 4px;font-size:16px}#pause table{border-collapse:collapse;width:100%;font-size:14px}#pause td{vertical-align:top;border-bottom:1px solid #333;padding:2px 6px}#pause td:first-child{color:#9fd3ff;white-space:nowrap}#pause label{justify-content:space-between;align-items:center;gap:8px;font-size:15px;line-height:2;display:flex}#pause input[type=range]{width:110px}#pause input[type=checkbox]{width:20px;height:20px}#pause button{cursor:pointer;color:#fff;background:#2a2a33;border:1px solid #777;border-radius:6px;margin-top:6px;padding:7px 10px;font-size:15px}#pause .main{justify-content:center;gap:10px;margin-top:10px;display:flex}#pause .main button{background:#5a3d00;border-color:#c9a227;min-width:120px;font-size:17px}#pause details{margin-top:8px;font-size:14px}#pause details button{margin:3px 2px;padding:4px 8px;font-size:13px}#pause details button.here{border-color:#ffd23a}#pause .tip{color:#aaa;margin-top:4px;font-size:12px;line-height:1.5}.tc{display:none}body.touch .tc{display:block}#stick{left:calc(var(--gutter) * .06);width:calc(var(--gutter) * .88);height:calc(var(--gutter) * .88);z-index:12;touch-action:none;background:#ffffff1f;border:2px solid #ffffff59;border-radius:50%;max-width:160px;max-height:160px;position:fixed;bottom:16px}#knob{pointer-events:none;background:#ffdc7899;border:2px solid #fff9;border-radius:50%;width:50%;height:50%;position:absolute;top:25%;left:25%}.tbtn{z-index:12;width:calc(var(--gutter) * .42);height:calc(var(--gutter) * .42);color:#fff;touch-action:none;text-shadow:0 1px 2px #000;border:2px solid #ffffff8c;border-radius:50%;justify-content:center;align-items:center;max-width:76px;max-height:76px;font-size:20px;font-weight:700;display:none;position:fixed}body.touch .tbtn{display:flex}.tbtn.on{filter:brightness(1.6);transform:scale(.94)}#btn-fire{right:calc(var(--gutter) * .05);background:#dc3c288c;bottom:16px}#btn-jump{right:calc(var(--gutter) * .53);background:#3c8ce68c;bottom:16px}#btn-grenade{right:calc(var(--gutter) * .05);bottom:calc(var(--gutter) * .5 + 22px);background:#e6aa288c}#btn-pause{left:calc(var(--gutter) * .25);z-index:12;width:calc(var(--gutter) * .4);color:#fff;touch-action:none;background:#00000080;border:2px solid #ffffff80;border-radius:8px;justify-content:center;align-items:center;height:40px;font-size:18px;font-weight:700;position:fixed;top:12px}body.touch #btn-pause{display:flex}#rotate{z-index:30;color:#ffd23a;text-align:center;background:#000;flex-direction:column;justify-content:center;align-items:center;font-size:28px;font-weight:700;display:none;position:fixed;inset:0}#rotate .ico{margin-bottom:12px;font-size:64px;animation:1.6s ease-in-out infinite rot}@keyframes rot{0%,30%{transform:rotate(0)}60%,to{transform:rotate(-90deg)}}@media (orientation:portrait){body.touch #rotate{display:flex}}</style>
+    <script type="module" crossorigin src="./assets/index-gLMTlkxO.js"></script>
+  </head>
+  <body>
+    <div id="game"></div>
+    <div id="scanlines"></div>
+    <div id="vignette"></div>
+    <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+      <filter id="crt-curve" filterUnits="userSpaceOnUse" primitiveUnits="userSpaceOnUse" x="0" y="0" width="960" height="540" color-interpolation-filters="sRGB">
+        <feImage id="crt-map" x="0" y="0" width="960" height="540" preserveAspectRatio="none" result="map" />
+        <feDisplacementMap id="crt-disp" in="SourceGraphic" in2="map" scale="20" xChannelSelector="R" yChannelSelector="G" />
+      </filter>
+    </svg>
+    <button id="gear" type="button">⚙ 暂停</button>
+    <div id="mute-ind" hidden>🔇 静音（M）</div>
+    <!-- 触屏 -->
+    <div id="stick" class="tc"><div id="knob"></div></div>
+    <div id="btn-fire" class="tbtn">射</div>
+    <div id="btn-jump" class="tbtn">跳</div>
+    <div id="btn-grenade" class="tbtn">雷</div>
+    <div id="btn-pause" class="tc">Ⅱ</div>
+    <div id="rotate"><div class="ico">📱</div>请横过来<div style="font-size:16px;color:#ccc;margin-top:8px">把手机横着拿才能玩</div></div>
+    <!-- 暂停界面 -->
+    <div id="pause" hidden>
+      <div class="box">
+        <h2>暂停 · PAUSE</h2>
+        <div class="cols">
+          <div class="col">
+            <h3>操作说明</h3>
+            <table>
+              <tr><td>1P 键盘</td><td>← → 走，↑ 朝上瞄，↓ 蹲 / 空中朝下打，K 跳，J 射击，L 手鼓雷，↓ + K 从跳台落下</td></tr>
+              <tr><td>2P 键盘</td><td>A D 走，W 朝上瞄，S 蹲 / 空中朝下打，Space 跳，F 射击，G 手鼓雷，S + Space 落下。标题画面或游戏里按 F 加入</td></tr>
+              <tr><td>手机</td><td>横着拿。左下摇杆走、上推瞄准、下推蹲；右下「射」「跳」「雷」；左上 Ⅱ 暂停</td></tr>
+              <tr><td>三轮</td><td>站在车旁按 ↓ 或跳到车上就上车，↓ + 跳 下车；车上射击 = 机枪，手鼓雷 = 手鼓炮（只有 1P 能开）</td></tr>
+              <tr><td>通用</td><td>Enter 开始 / 续关 / 确认，Esc 暂停，M 静音</td></tr>
+              <tr><td>试炼场</td><td>按 0 进出；1 到 5 刷怪，6 放三轮，C 清场</td></tr>
+            </table>
+          </div>
+          <div class="col">
+            <h3>设置</h3>
+            <label>声音（音乐 · 音效 · 播报）<input id="set-sound" type="checkbox" /></label>
+            <label>震屏 <input id="set-shake-on" type="checkbox" /></label>
+            <label>震屏强度 <input id="set-shake" type="range" min="0" max="100" step="5" /> <span id="set-shake-v"></span></label>
+            <label>扫描线 <input id="set-scan" type="checkbox" /></label>
+            <label>暗角 + 屏幕弧度 <input id="set-crt" type="checkbox" /></label>
+            <label>减少闪烁 <input id="set-flash" type="checkbox" /></label>
+            <div class="tip">设置存在这台设备的浏览器里，下次打开还在。</div>
+            <details>
+              <summary>测试入口（直接跳关）</summary>
+              <button id="set-level1" type="button">第一关 · 丽江</button>
+              <button id="set-arena" type="button">怪物试炼场</button>
+              <button id="set-boss" type="button">打骰王战车</button>
+              <button id="set-level2" type="button">第二关 · 济南</button>
+              <button id="set-climb" type="button">爬解放阁</button>
+              <button id="set-boss2" type="button">打噪音墙</button>
+              <button id="set-level3" type="button">第三关 · 福州</button>
+              <button id="set-down" type="button">下防空洞</button>
+              <button id="set-boss3" type="button">打火锅八爪</button>
+              <button id="set-ending" type="button">看结尾</button>
+            </details>
+          </div>
+        </div>
+        <div class="main">
+          <button id="resume" type="button">继续（Esc）</button>
+          <button id="to-title" type="button">回标题</button>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

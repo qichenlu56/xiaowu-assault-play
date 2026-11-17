@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="zh"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>小屋突击 · 进度墙</title>
+<style>
+body{margin:0;background:#15171c;color:#e8e6df;font:16px/1.6 -apple-system,"PingFang SC","Microsoft YaHei",sans-serif}
+main{max-width:860px;margin:0 auto;padding:28px 18px 60px}
+h1{font-size:28px;margin:0}.sub{color:#9a9890;margin:4px 0 18px}
+.bar{height:14px;background:#2a2d35;border-radius:7px;overflow:hidden}.bar i{display:block;height:100%;background:#ffd23c}
+.card{display:grid;grid-template-columns:300px 1fr;gap:18px;background:#1f222a;border-radius:10px;padding:14px;margin-top:18px;border-left:5px solid #444}
+.card.done{border-left-color:#ffd23c}.card img{width:100%;border-radius:6px;image-rendering:pixelated;display:block}
+.v{font:700 22px ui-monospace,Menlo,monospace;color:#ffd23c}.card:not(.done) .v{color:#777}
+h2{font-size:18px;margin:2px 0 6px}ul{margin:0;padding-left:20px}.meta{color:#9a9890;font-size:14px;margin-top:8px}
+a.play{display:inline-block;margin-top:10px;background:#ff4a3c;color:#fff;text-decoration:none;padding:6px 16px;border-radius:6px;font-weight:700}
+.card:not(.done){opacity:.55}
+@media(max-width:640px){.card{grid-template-columns:1fr}}
+</style></head><body><main>
+<h1 id="t">进度墙</h1><p class="sub" id="s"></p><div class="bar"><i id="b"></i></div><div id="list"></div>
+</main><script>
+const src=new URLSearchParams(location.search).get('data')||'versions.json';
+fetch(src).then(r=>r.json()).then(d=>{
+  const done=d.versions.filter(v=>v.done).length;
+  document.getElementById('t').textContent=d.project+' · 进度墙';
+  document.getElementById('s').textContent='已完成 '+done+' / '+d.total+' 步';
+  document.getElementById('b').style.width=(done/d.total*100)+'%';
+  const L=document.getElementById('list');
+  for(const v of d.versions){const c=document.createElement('div');c.className='card'+(v.done?' done':'');
+    const im=document.createElement('img');im.src=v.shot;im.alt=v.version;c.appendChild(im);
+    const r=document.createElement('div');
+    const a=document.createElement('div');a.className='v';a.textContent=v.version;r.appendChild(a);
+    const h=document.createElement('h2');h.textContent=v.title;r.appendChild(h);
+    const u=document.createElement('ul');for(const n of v.news){const li=document.createElement('li');li.textContent=n;u.appendChild(li);}r.appendChild(u);
+    const m=document.createElement('div');m.className='meta';m.textContent=v.done?(v.date+' · 检查通过 '+v.passed+' / '+v.total):'还没做';r.appendChild(m);
+    if(v.done&&/^https?:|^\//.test(v.link)){const p=document.createElement('a');p.className='play';p.href=v.link;p.textContent='点这里玩';r.appendChild(p);}
+    c.appendChild(r);L.appendChild(c);}
+  window.__n=d.versions.length;
+});
+</script></body></html>
