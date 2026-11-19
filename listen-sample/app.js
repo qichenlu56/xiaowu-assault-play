@@ -9,33 +9,43 @@
   const SONGS = [
     {
       id: "01",
-      title: "烟台山的晚风",
+      title: "成都",
+      artist: "赵雷",
+      hint: "赵雷 · 专辑《无法长大》（2016）",
       src: "audio/01.wav",
-      options: ["烟台山的晚风", "巷口那把旧吉他", "雨停以后再走", "三个城市的月亮"],
+      options: ["成都", "南山南", "董小姐", "安和桥"],
     },
     {
       id: "02",
-      title: "青石路上的灯",
+      title: "南方姑娘",
+      artist: "赵雷",
+      hint: "赵雷 · 专辑《赵小雷》（2011）",
       src: "audio/02.wav",
-      options: ["桥头还亮着一盏", "青石路上的灯", "左巷的橘子灯", "风把门帘掀开时"],
+      options: ["阿刁", "南方姑娘", "斑马，斑马", "理想"],
     },
     {
       id: "03",
-      title: "湖面上的旧船票",
+      title: "南山南",
+      artist: "马頔",
+      hint: "马頔 · 专辑《孤岛》（2014）",
       src: "audio/03.wav",
-      options: ["等船的那一夜", "旧船票上的字", "湖面上的旧船票", "夜渡的人还没回来"],
+      options: ["理想", "南山南", "董小姐", "鼓楼"],
     },
     {
       id: "04",
-      title: "雪山下的一封信",
+      title: "董小姐",
+      artist: "宋冬野",
+      hint: "宋冬野 · 专辑《安和桥北》（2013）",
       src: "audio/04.wav",
-      options: ["从丽江寄来的路", "雪停了再写", "雪山下的一封信", "山路尽头的茶"],
+      options: ["南方姑娘", "董小姐", "南山南", "阿刁"],
     },
     {
       id: "05",
-      title: "店里还存着那杯酒",
+      title: "安和桥",
+      artist: "宋冬野",
+      hint: "宋冬野 · 专辑《安和桥北》（2013）",
       src: "audio/05.wav",
-      options: ["柜上那只空杯子", "今夜先记下这一笔", "店里还存着那杯酒", "把余下的酒先留下"],
+      options: ["安和桥", "成都", "理想", "南山南"],
     },
   ];
 
@@ -58,7 +68,7 @@
   let lastTick = 0;
 
   function banner() {
-    return `<div class="sample-banner">样稿：占位旋律，正式版换成店里歌手的录音</div>`;
+    return `<div class="sample-banner">样稿：旋律为占位，正式版用店里歌手翻唱的片段</div>`;
   }
 
   function queueNo() {
@@ -235,6 +245,8 @@
     resetRoundFlags();
     state.question = {
       title: song.title,
+      artist: song.artist,
+      hint: song.hint,
       src: song.src,
       options: options,
       correctIndex: options.indexOf(song.title),
@@ -404,14 +416,15 @@
         <div class="topbar">
           <div>
             <div class="brand-kicker">大冰的小屋 · 烟台山分舵</div>
-            <h1 class="brand-title">路上听歌</h1>
+            <h1 class="brand-title">猜对就进</h1>
+            <div class="brand-sub">赢的队提前叫号</div>
           </div>
           <div class="queue-pill">今晚号码<strong>${state.queueNo} 号</strong></div>
         </div>
         ${banner()}
         <section class="paper">
-          <h2>门口先听一段</h2>
-          <p class="muted">和同来的人组成一队。别的队伍也在同时听、同时答。答得又对又快，分更高。</p>
+          <h2>听一段，赢了先请你进</h2>
+          <p class="muted">和同来的人组成一队，听一段民谣抢答。答得又对又快分更高。今晚赢的那一队，可以提前叫号进门。</p>
           <label class="field">怎么称呼
             <input id="name-input" type="text" maxlength="12" placeholder="例如：小刚" value="${escapeHtml(name)}" />
           </label>
@@ -426,7 +439,7 @@
           </label>
           <button type="button" class="btn-main" id="btn-join">进场组队</button>
         </section>
-        <p class="muted" style="color:#e8c48a;text-align:center;font-size:12px;">这是样稿，分数和券都不能当真核销。门口电视可打开同一链接，后面加上 ?screen</p>
+        <p class="muted" style="color:#e8c48a;text-align:center;font-size:12px;">这是样稿，提前叫号和券都不能当真办理。<br>门口大屏：同一网址后加 ?screen</p>
       </div>`;
   }
 
@@ -436,7 +449,8 @@
         <div class="topbar">
           <div>
             <div class="brand-kicker">大冰的小屋 · 烟台山分舵</div>
-            <h1 class="brand-title">路上听歌</h1>
+            <h1 class="brand-title">猜对就进</h1>
+            <div class="brand-sub">赢的队提前叫号</div>
           </div>
           <div class="queue-pill">今晚号码<strong>${state.queueNo} 号</strong></div>
         </div>
@@ -487,6 +501,7 @@
           <div>请听这一段</div>
           <div class="eq ${playing ? "playing" : ""}" aria-hidden="true">${"<span></span>".repeat(7)}</div>
           <button type="button" class="btn-play" id="btn-play">${playing ? "正在播放" : "再听一遍"}</button>
+          <div class="hint">提示：${escapeHtml(q.hint || q.artist || "")}</div>
         </section>
         <div class="options">
           ${q.options
@@ -518,6 +533,7 @@
         <section class="paper listen-card">
           <p class="muted">这一段是</p>
           <h2>${escapeHtml(q.title)}</h2>
+          <div class="hint">${escapeHtml(q.hint || q.artist || "")}</div>
           <div class="gain">${ok ? "+" + gain : "本题没有分"}</div>
         </section>
         <div class="options">
@@ -535,26 +551,32 @@
       </div>`;
   }
 
-  function couponCard() {
+  function couponCard(opts) {
+    opts = opts || {};
+    const showEarly = !!opts.showEarly;
+    const gifts = (showEarly ? "提前叫号<br/>" : "") + "小吃券 一份<br/>下次来盖章  +1 积分";
     return `
       <div class="coupon">
         <div class="shop">大冰的小屋 · 烟台山分舵</div>
-        <h3>路上听歌</h3>
-        <div class="gift">小吃券 一份<br/>下次来盖章  +1 积分</div>
+        <h3>猜对就进</h3>
+        <div class="gift">${gifts}</div>
         <p class="fine-print">此为样稿，不能当真核销。</p>
-        <div class="seal">同路</div>
+        <div class="seal">${showEarly ? "先请" : "同路"}</div>
       </div>`;
   }
 
   function viewResults() {
     const list = sortedTeams();
     const rank = playerRank();
+    const winnerName = list.length ? list[0].name : "";
+    const playerWon = !!(list.length && list[0].isPlayer);
     return `
       <div class="phone-shell">
         <div class="topbar">
           <div>
             <div class="brand-kicker">今晚榜单</div>
-            <h1 class="brand-title">路上听歌</h1>
+            <h1 class="brand-title">猜对就进</h1>
+            <div class="brand-sub">赢的队提前叫号</div>
           </div>
           <div class="queue-pill">本队第<strong>${rank}</strong></div>
         </div>
@@ -564,12 +586,15 @@
           <div class="rank-list">
             ${list
               .map(function (t, i) {
-                return `<div class="rank-item"><div class="pos">${i + 1}</div><div>${escapeHtml(t.name)}${t.isPlayer ? " · 本队" : ""}</div><strong>${t.score}</strong></div>`;
+                const win = i === 0 ? " winner" : "";
+                const tag = i === 0 ? '<div class="tag win">提前叫号</div>' : "";
+                return `<div class="rank-item${win}"><div class="pos">${i + 1}</div><div>${escapeHtml(t.name)}${t.isPlayer ? " · 本队" : ""}${tag}</div><strong>${t.score}</strong></div>`;
               })
               .join("")}
           </div>
         </section>
-        ${couponCard()}
+        <div class="early-prize">${playerWon ? "本队今晚赢了" : "今晚第一名是" + escapeHtml(winnerName)}<strong>提前叫号</strong></div>
+        ${couponCard({ showEarly: playerWon })}
         <button type="button" class="btn-main" id="btn-again" style="box-shadow:0 8px 0 #6d1b12;">再玩一局</button>
       </div>`;
   }
@@ -620,16 +645,16 @@
       nowBig = "正在放歌，请听这一段";
     } else if (state.view === "reveal") {
       nowLine = `第 ${state.roundIndex + 1} / ${TOTAL_ROUNDS} 局 · 揭晓`;
-      nowBig = "这一段是「" + state.question.title + "」";
+      nowBig = "这一段是《" + state.question.title + "》 · " + (state.question.artist || "");
     } else if (state.view === "results") {
       nowLine = "今晚这一轮结束";
-      nowBig = "看榜，也别忘了手里的券";
+      nowBig = (sortedTeams()[0] ? "第一名 " + sortedTeams()[0].name + " · 提前叫号" : "赢的队提前叫号");
     } else if (state.view === "called") {
       nowLine = "有一桌号到了";
       nowBig = state.queueNo + " 号，请入场听歌";
     } else if (state.view === "join") {
       nowLine = "客人正在扫码入队";
-      nowBig = "路上听歌";
+      nowBig = "猜对就进 · 赢的队提前叫号";
     }
     const board = live
       ? `<div class="bars">${list
@@ -652,15 +677,16 @@
         <div class="screen-head">
           <div>
             <div class="brand-kicker">大冰的小屋 · 烟台山分舵</div>
-            <h1>路上听歌</h1>
+            <h1>猜对就进</h1>
+            <div class="brand-sub">赢的队提前叫号</div>
           </div>
           <div>${banner()}</div>
         </div>
         <div class="screen-now">${nowLine}<span class="big">${escapeHtml(nowBig)}</span></div>
         ${board}
         <div class="screen-foot">
-          <span>几拨人同时分组比 · 答得又对又快分更高</span>
-          <span>${live ? "今晚号码 " + state.queueNo + " 号也在场" : "正式版会换成店里歌手的录音"}</span>
+          <span>几拨人同时分组比 · 赢的队提前叫号</span>
+          <span>${live ? "今晚号码 " + state.queueNo + " 号也在场" : "正式版用店里歌手翻唱的片段"}</span>
         </div>
       </div>`;
   }

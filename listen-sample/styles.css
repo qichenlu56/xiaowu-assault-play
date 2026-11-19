@@ -105,6 +105,12 @@ button:disabled { cursor: default; opacity: 0.55; }
   color: var(--paper);
   text-shadow: 0 2px 0 rgba(0,0,0,0.35);
 }
+.brand-sub {
+  margin-top: 4px;
+  font-size: 14px;
+  letter-spacing: 0.12em;
+  color: var(--gold);
+}
 
 .queue-pill {
   flex: 0 0 auto;
@@ -280,6 +286,12 @@ input[type="text"] {
   color: var(--paper);
 }
 
+.hint {
+  margin-top: 8px;
+  font-size: 14px;
+  color: var(--ink-soft);
+  letter-spacing: 0.04em;
+}
 .listen-card {
   text-align: center;
   padding: 16px 12px 14px;
@@ -387,6 +399,39 @@ input[type="text"] {
   text-align: center;
   position: relative;
   overflow: hidden;
+}
+.early-prize {
+  background: #9c2b1a;
+  color: #f8ead2;
+  border-radius: 14px;
+  padding: 12px 14px;
+  text-align: center;
+  letter-spacing: 0.08em;
+  font-size: 16px;
+  line-height: 1.5;
+}
+.early-prize strong {
+  display: block;
+  font-family: var(--display);
+  font-size: 26px;
+  font-weight: 400;
+  letter-spacing: 0.08em;
+  margin-top: 2px;
+}
+.tag.win {
+  color: var(--red);
+  border-color: var(--red);
+}
+.rank-item.winner {
+  background: #f7e4c2;
+  border-radius: 10px;
+  padding: 8px 8px;
+  border-bottom: 0;
+}
+.rank-item .tag {
+  display: inline-block;
+  margin-left: 6px;
+  vertical-align: middle;
 }
 .coupon .shop {
   letter-spacing: 0.2em;
