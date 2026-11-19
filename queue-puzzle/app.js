@@ -1,9 +1,14 @@
 (function () {
   "use strict";
 
-  var PERIOD_MS = 30 * 60 * 1000;
-  var FAST_MS = 60 * 1000;
-  var CITY_TEAMS = ["丽江队", "济南队", "福州队", "路上队"];
+  var PERIOD_MS = 60 * 1000;
+  var LEVEL_MS = 2 * 60 * 1000;
+  var FAST_LEVEL_MS = 20 * 1000;
+  var SLOGAN = "每分钟赛点，第一名优先进门";
+  var TEAM_MAX = 8;
+  var TEAMS_KEY = "xw-queue-puzzle-open-teams-v1";
+  var SEED_TEAMS = ["晚风里", "月亮船", "第二杯", "候场的人"];
+  var BOT_POOL = ["晚风里", "月亮船", "第二杯", "候场的人", "小酒窝", "夜归人", "路边听歌", "干杯再走"];
   var DIRS = {
     up: { dr: -1, dc: 0 },
     down: { dr: 1, dc: 0 },
@@ -16,17 +21,22 @@
 
   var params = new URLSearchParams(location.search);
   var isScreen = params.has("screen");
-  var fastParam = params.get("fast");
   var startFast = params.has("fast");
-  var fastMs = FAST_MS;
-  if (fastParam && /^\d+$/.test(fastParam)) {
-    var sec = Number(fastParam);
-    if (sec >= 5 && sec <= 120) fastMs = sec * 1000;
-  }
 
   var app = document.getElementById("app");
   var flyLayer = document.getElementById("fly-layer");
   var channel = "BroadcastChannel" in window ? new BroadcastChannel(CHANNEL_NAME) : null;
+  var audioCtx = null;
+  function unlockAudio() {
+    try {
+      var AC = window.AudioContext || window.webkitAudioContext;
+      if (!AC) return;
+      if (!audioCtx) audioCtx = new AC();
+      if (audioCtx.state === "suspended") audioCtx.resume();
+    } catch (e) {}
+  }
+  document.addEventListener("touchstart", unlockAudio, { once: true, passive: true });
+  document.addEventListener("click", unlockAudio, { once: true });
 
   var state = null;
   var timerId = 0;
@@ -41,30 +51,84 @@
     return 16 + Math.floor(Math.random() * 22);
   }
 
-  function periodLength() {
-    return state && state.fast ? (state.fastMs || fastMs) : PERIOD_MS;
+  function levelLength() {
+    return state && state.fast ? FAST_LEVEL_MS : LEVEL_MS;
+  }
+
+  function armLevelTimer() {
+    if (!state) return;
+    state.levelEndsAt = Date.now() + levelLength();
+  }
+
+  function levelRemainMs() {
+    if (!state || !state.levelEndsAt) return 0;
+    return Math.max(0, state.levelEndsAt - Date.now());
+  }
+
+  function armSettleTimer() {
+    if (!state) return;
+    state.settleAt = Date.now() + PERIOD_MS;
+  }
+
+  function remainMs() {
+    if (!state || !state.settleAt) return 0;
+    return Math.max(0, state.settleAt - Date.now());
+  }
+
+  function normalizeTeamName(raw) {
+    return String(raw || "").replace(/\s+/g, " ").trim().slice(0, TEAM_MAX);
+  }
+
+  function loadOpenTeams() {
+    var list = SEED_TEAMS.slice();
+    try {
+      var raw = localStorage.getItem(TEAMS_KEY);
+      var extra = raw ? JSON.parse(raw) : [];
+      if (Array.isArray(extra)) {
+        extra.forEach(function (n) {
+          n = normalizeTeamName(n);
+          if (n && list.indexOf(n) < 0) list.push(n);
+        });
+      }
+    } catch (e) {}
+    return list;
+  }
+
+  function rememberTeam(name) {
+    name = normalizeTeamName(name);
+    if (!name) return;
+    var list = loadOpenTeams();
+    if (list.indexOf(name) < 0) {
+      list.push(name);
+      try { localStorage.setItem(TEAMS_KEY, JSON.stringify(list)); } catch (e) {}
+    }
   }
 
   function defaultTeams(playerTeam) {
     var player = { id: "player", name: playerTeam, score: 0, isPlayer: true };
-    var bots = [
-      { id: "lijiang", name: "丽江队", skill: 0.72 },
-      { id: "jinan", name: "济南队", skill: 0.6 },
-      { id: "fuzhou", name: "福州队", skill: 0.66 }
-    ].filter(function (b) { return b.name !== playerTeam; });
-    if (bots.length < 3) {
-      bots.push({ id: "tonglu", name: "同路人队", skill: 0.62 });
+    var pool = BOT_POOL.filter(function (n) { return n !== playerTeam; });
+    var i, j, tmp;
+    for (i = pool.length - 1; i > 0; i--) {
+      j = Math.floor(Math.random() * (i + 1));
+      tmp = pool[i];
+      pool[i] = pool[j];
+      pool[j] = tmp;
     }
-    return [player].concat(bots.slice(0, 3).map(function (b) {
-      return { id: b.id, name: b.name, score: 0, isPlayer: false, skill: b.skill };
-    }));
+    var skills = [0.72, 0.66, 0.6];
+    var bots = pool.slice(0, 3).map(function (name, idx) {
+      return { id: "bot-" + idx, name: name, score: 0, isPlayer: false, skill: skills[idx] || 0.62 };
+    });
+    while (bots.length < 3) {
+      bots.push({ id: "bot-" + bots.length, name: "路过的", score: 0, isPlayer: false, skill: 0.62 });
+    }
+    return [player].concat(bots);
   }
 
   function defaultState() {
     return {
       view: "join",
       playerName: "",
-      teamName: "路上队",
+      teamName: "",
       queueNo: queueNo(),
       teams: [],
       level: 1,
@@ -72,35 +136,40 @@
       combo: 0,
       lastClearAt: 0,
       settleAt: 0,
+      levelEndsAt: 0,
+      lastSettle: null,
       fast: startFast,
-      fastMs: fastMs,
       stuckHint: false,
       transitioning: false,
       toast: "",
-      lastSettle: null
+      teamHint: ""
     };
   }
 
   function levelSpec(level) {
     var lv = Math.max(1, level);
-    var size = 5;
-    if (lv >= 3) size = 6;
-    if (lv >= 6) size = 7;
-    if (lv >= 10) size = 8;
+    var size = 6;
+    if (lv >= 3) size = 7;
+    if (lv >= 5) size = 8;
     var cells = size * size;
-    var blockers = 0;
-    if (lv >= 3) blockers = 1;
-    if (lv >= 4) blockers = 2;
-    if (lv >= 6) blockers = 3;
-    if (lv >= 9) blockers = 4;
-    if (lv >= 12) blockers = 5;
-    if (lv >= 16) blockers = 6;
-    var density = 0.42 + Math.min(0.28, (lv - 1) * 0.025);
+    var blockers = 2;
+    if (lv >= 2) blockers = 3;
+    if (lv >= 3) blockers = 4;
+    if (lv >= 4) blockers = 5;
+    if (lv >= 6) blockers = 6;
+    if (lv >= 8) blockers = 7;
+    if (lv >= 11) blockers = 8;
+    var density = 0.50 + Math.min(0.18, (lv - 1) * 0.03);
     var arrows = Math.round(cells * density) - blockers;
-    arrows = Math.max(8, Math.min(cells - blockers - 2, arrows));
-    var minMoves = lv <= 2 ? 3 : 2;
-    var hintClearable = lv <= 2;
-    return { size: size, blockers: blockers, arrows: arrows, minMoves: minMoves, hintClearable: hintClearable };
+    arrows = Math.max(12, Math.min(cells - blockers - 2, arrows));
+    var turns = 1;
+    if (lv >= 2) turns = 2;
+    if (lv >= 4) turns = 3;
+    if (lv >= 6) turns = 4;
+    if (lv >= 9) turns = 5;
+    if (lv >= 12) turns = 6;
+    turns = Math.min(turns, Math.max(1, arrows - 4));
+    return { size: size, blockers: blockers, arrows: arrows, minMoves: 2, hintClearable: false, turns: turns };
   }
 
   function emptyBoard(size) {
@@ -154,20 +223,59 @@
   }
 
   function cloneBoard(board) {
-    return { size: board.size, cells: board.cells.map(function (c) { return { type: c.type, dir: c.dir }; }) };
+    return { size: board.size, cells: board.cells.map(function (c) { return { type: c.type, dir: c.dir, turn: !!c.turn }; }) };
+  }
+
+  function rotateDir(dir) {
+    return DIR_LIST[(DIR_LIST.indexOf(dir) + 1) % 4];
+  }
+
+  function rotateCell(board, r, c) {
+    var cell = at(board, r, c);
+    if (!cell || cell.type !== "arrow") return;
+    cell.dir = rotateDir(cell.dir);
+  }
+
+  function boardKey(board) {
+    return board.cells.map(function (c) {
+      return c.type === "arrow" ? (c.dir + (c.turn ? "t" : "")) : (c.type === "block" ? "B" : ".");
+    }).join("");
   }
 
   function isFullyClearable(board) {
-    var clone = cloneBoard(board);
-    var guard = 0;
-    while (countArrows(clone) > 0 && guard < 400) {
-      guard++;
-      var moves = listClearable(clone);
-      if (!moves.length) return false;
-      var m = moves[0];
-      clone.cells[m.r * clone.size + m.c] = { type: "empty", dir: null };
+    var visited = {};
+    var nodes = 0;
+    function rec(b, depth) {
+      if (countArrows(b) === 0) return true;
+      if (depth > 140 || nodes > 7000) return false;
+      var key = boardKey(b);
+      if (visited[key]) return false;
+      visited[key] = true;
+      nodes++;
+      var moves = listClearable(b);
+      var i, n, m, r, c, cell;
+      if (moves.length) {
+        for (i = 0; i < moves.length; i++) {
+          n = cloneBoard(b);
+          m = moves[i];
+          n.cells[m.r * n.size + m.c] = { type: "empty", dir: null, turn: false };
+          if (rec(n, depth + 1)) return true;
+        }
+        return false;
+      }
+      for (r = 0; r < b.size; r++) {
+        for (c = 0; c < b.size; c++) {
+          cell = at(b, r, c);
+          if (cell && cell.type === "arrow" && cell.turn) {
+            n = cloneBoard(b);
+            rotateCell(n, r, c);
+            if (rec(n, depth + 1)) return true;
+          }
+        }
+      }
+      return false;
     }
-    return countArrows(clone) === 0;
+    return rec(cloneBoard(board), 0);
   }
 
   function pathIsOpen(board, r, c, dir) {
@@ -181,6 +289,36 @@
       nc += d.dc;
     }
     return true;
+  }
+
+  function applyTurns(board, turns) {
+    var want = Math.max(0, turns || 0);
+    if (!want) return isFullyClearable(board);
+    var idxs = [];
+    board.cells.forEach(function (cell, i) {
+      if (cell.type === "arrow") idxs.push(i);
+    });
+    var i, j, tmp;
+    for (i = idxs.length - 1; i > 0; i--) {
+      j = Math.floor(Math.random() * (i + 1));
+      tmp = idxs[i];
+      idxs[i] = idxs[j];
+      idxs[j] = tmp;
+    }
+    var added = 0;
+    for (i = 0; i < idxs.length && added < want; i++) {
+      var cell = board.cells[idxs[i]];
+      cell.turn = true;
+      cell.dir = rotateDir(cell.dir);
+      added++;
+    }
+    if (isFullyClearable(board)) return true;
+    // undo if this made it unsolvable
+    for (i = 0; i < idxs.length && i < added; i++) {
+      board.cells[idxs[i]].turn = false;
+      board.cells[idxs[i]].dir = rotateDir(rotateDir(rotateDir(board.cells[idxs[i]].dir)));
+    }
+    return isFullyClearable(board);
   }
 
   function generateBoard(level) {
@@ -222,7 +360,7 @@
         board.cells[pick.r * spec.size + pick.c] = { type: "arrow", dir: pick.dir };
         placed++;
       }
-      if (placed >= Math.max(spec.minMoves, Math.floor(spec.arrows * 0.8)) && listClearable(board).length >= spec.minMoves && isFullyClearable(board)) {
+      if (placed >= Math.max(spec.minMoves, Math.floor(spec.arrows * 0.8)) && listClearable(board).length >= 1 && applyTurns(board, spec.turns) && isFullyClearable(board)) {
         return board;
       }
     }
@@ -254,8 +392,9 @@
       teams: state.teams,
       level: state.level,
       settleAt: state.settleAt,
-      fast: state.fast,
+      levelEndsAt: state.levelEndsAt,
       lastSettle: state.lastSettle,
+      fast: state.fast,
       now: Date.now(),
       arrowsLeft: state.board ? countArrows(state.board) : 0,
       size: state.board ? state.board.size : 0,
@@ -270,11 +409,6 @@
     } catch (e) {
       return null;
     }
-  }
-
-  function remainMs() {
-    if (!state || !state.settleAt) return 0;
-    return Math.max(0, state.settleAt - Date.now());
   }
 
   function formatTime(ms) {
@@ -310,36 +444,38 @@
     state.stuckHint = false;
     state.transitioning = false;
     state.fast = !!fast || startFast;
-    state.fastMs = state.fastMs || fastMs;
-    state.settleAt = Date.now() + periodLength();
+    armSettleTimer();
+    armLevelTimer();
     state.view = "play";
     startLoops();
     publish();
     render();
   }
 
-  function pointsForClear(level, combo) {
-    return 10 * level + Math.max(0, combo - 1) * 5;
+  function pointsForClear() {
+    return 1;
   }
 
   function tryClear(r, c, el) {
     if (!state || state.view !== "play" || !state.board || state.transitioning) return;
-    if (!isClearable(state.board, r, c)) return;
     var cell = at(state.board, r, c);
+    if (!cell || cell.type !== "arrow") return;
+    if (!isClearable(state.board, r, c)) {
+      if (cell.turn) {
+        rotateCell(state.board, r, c);
+        state.stuckHint = listClearable(state.board).length === 0;
+        publish();
+        render();
+      }
+      return;
+    }
     var dir = cell.dir;
-    var now = Date.now();
-    if (now - state.lastClearAt < 1400) state.combo += 1;
-    else state.combo = 1;
-    state.lastClearAt = now;
-    var pts = pointsForClear(state.level, state.combo);
-    addScore(pts);
+    addScore(1);
     flyArrow(el, dir);
-    state.board.cells[r * state.board.size + c] = { type: "empty", dir: null };
+    state.board.cells[r * state.board.size + c] = { type: "empty", dir: null, turn: false };
     state.stuckHint = false;
     if (countArrows(state.board) === 0) {
       var finished = state.level;
-      var bonus = 50 * finished;
-      addScore(bonus);
       state.transitioning = true;
       showToast("第 " + finished + " 关过关");
       setTimeout(function () {
@@ -348,6 +484,7 @@
         state.board = generateBoard(state.level);
         state.transitioning = false;
         state.stuckHint = listClearable(state.board).length === 0;
+        armLevelTimer();
         publish();
         render();
       }, 700);
@@ -356,36 +493,36 @@
     }
     publish();
     render();
-    if (el && pts) {
-      // score pop is created after render, skip
-    }
   }
 
   function reshuffle() {
     if (!state || !state.board) return;
     var size = state.board.size;
     var blockers = [];
-    var arrows = 0;
+    var bag = [];
     state.board.cells.forEach(function (cell, i) {
       if (cell.type === "block") blockers.push(i);
-      if (cell.type === "arrow") arrows++;
+      if (cell.type === "arrow") bag.push({ turn: !!cell.turn });
     });
-    var board = emptyBoard(size);
-    blockers.forEach(function (i) { board.cells[i] = { type: "block", dir: null }; });
-    var placed = 0;
-    var guard = 0;
-    while (placed < arrows && guard < 400) {
-      guard++;
-      var idx = Math.floor(Math.random() * board.cells.length);
-      if (board.cells[idx].type !== "empty") continue;
-      board.cells[idx] = { type: "arrow", dir: DIR_LIST[Math.floor(Math.random() * 4)] };
-      placed++;
+    var attempt, board, placed, guard, idx, ok;
+    for (attempt = 0; attempt < 40; attempt++) {
+      board = emptyBoard(size);
+      blockers.forEach(function (i) { board.cells[i] = { type: "block", dir: null }; });
+      placed = 0;
+      guard = 0;
+      while (placed < bag.length && guard < 400) {
+        guard++;
+        idx = Math.floor(Math.random() * board.cells.length);
+        if (board.cells[idx].type !== "empty") continue;
+        board.cells[idx] = { type: "arrow", dir: DIR_LIST[Math.floor(Math.random() * 4)], turn: bag[placed].turn };
+        placed++;
+      }
+      if (listClearable(board).length >= 1 && isFullyClearable(board)) { ok = true; break; }
     }
-    if (listClearable(board).length === 0 && arrows > 0) {
-      // force one edge arrow out
+    if (!ok) {
       for (var c = 0; c < size; c++) {
         if (board.cells[c].type === "empty") {
-          board.cells[c] = { type: "arrow", dir: "up" };
+          board.cells[c] = { type: "arrow", dir: "up", turn: false };
           break;
         }
       }
@@ -420,8 +557,9 @@
     setTimeout(function () { if (ghost.parentNode) ghost.parentNode.removeChild(ghost); }, 420);
   }
 
-  function arrowSvg(dir) {
-    return '<svg class="arrow-glyph ' + dir + '" viewBox="0 0 64 64" aria-hidden="true"><path fill="currentColor" d="M32 6l16 22h-10v30h-12V28H16z"/></svg>';
+  function arrowSvg(dir, turn) {
+    var mark = turn ? '<path fill="none" stroke="#9c2b1a" stroke-width="4" d="M46 40a14 14 0 1 1-8-18" /><path fill="#9c2b1a" d="M36 18l12 2-6 10z"/>' : "";
+    return '<svg class="arrow-glyph ' + dir + (turn ? " is-turn" : "") + '" viewBox="0 0 64 64" aria-hidden="true"><path fill="currentColor" d="M32 6l16 22h-10v30h-12V28H16z"/>' + mark + "</svg>";
   }
 
   function jarSvg() {
@@ -433,18 +571,29 @@
       '</svg>';
   }
 
-  function showToast(text) {
+  function showToast(text, hold) {
     state.toast = text;
     if (toastTimer) clearTimeout(toastTimer);
     toastTimer = setTimeout(function () {
       if (state) state.toast = "";
       var el = document.querySelector(".toast");
       if (el && el.parentNode) el.parentNode.removeChild(el);
-    }, 900);
+    }, hold || 900);
     var node = document.createElement("div");
     node.className = "toast";
     node.textContent = text;
     document.body.appendChild(node);
+  }
+
+  function restartLevel() {
+    if (!state || state.view !== "play" || state.transitioning) return;
+    state.combo = 0;
+    state.board = generateBoard(state.level);
+    state.stuckHint = listClearable(state.board).length === 0;
+    armLevelTimer();
+    showToast("时间到，重来本关", 1600);
+    publish();
+    render();
   }
 
   function doSettle() {
@@ -462,11 +611,12 @@
 
   function nextRound() {
     state.teams.forEach(function (t) { t.score = 0; });
-    state.settleAt = Date.now() + periodLength();
+    armSettleTimer();
     state.view = "play";
     if (!state.board || countArrows(state.board) === 0) {
       state.board = generateBoard(state.level || 1);
     }
+    armLevelTimer();
     startLoops();
     publish();
     render();
@@ -497,6 +647,9 @@
       doSettle();
       return;
     }
+    if (state.view === "play" && !state.transitioning && state.levelEndsAt && levelRemainMs() <= 0) {
+      restartLevel();
+    }
     updateClockOnly();
     timerId = requestAnimationFrame(tick);
   }
@@ -508,16 +661,21 @@
       var wrap = el.closest(".clock, .screen-clock");
       if (wrap) wrap.classList.toggle("urgent", ms > 0 && ms <= 10000);
     });
+    var lv = levelRemainMs();
+    document.querySelectorAll(".js-level-clock").forEach(function (el) {
+      el.textContent = formatTime(lv);
+      var wrap = el.closest(".level-clock, .screen-level-clock");
+      if (wrap) wrap.classList.toggle("urgent", lv > 0 && lv <= 10000);
+    });
   }
 
   function botTick() {
     if (!state || state.view !== "play") return;
-    var lv = state.level || 1;
     state.teams.forEach(function (t) {
       if (t.isPlayer) return;
-      if (Math.random() > 0.82 + (t.skill || 0.6) * 0.1) return;
-      var gain = Math.round((10 + lv * 5) * (0.8 + (t.skill || 0.6) * 0.7) * (0.7 + Math.random() * 0.7));
-      t.score += gain;
+      // About 12–18 points a minute, in line with 1 point per arrow.
+      if (Math.random() > 0.3 + (t.skill || 0.6) * 0.4) return;
+      t.score += 1;
     });
     publish();
     // refresh scores without rebuilding the board mid-tap if possible
@@ -537,27 +695,28 @@
 
   function viewJoin() {
     var name = (state.playerName || "").trim();
-    var team = state.teamName || "路上队";
+    var team = state.teamName || "";
     return '<div class="phone-shell">' +
       '<div class="topbar"><div>' +
       '<div class="brand-kicker">大冰的小屋 · 烟台山分舵</div>' +
       '<h1 class="brand-title">消得多 先进门</h1>' +
-      '<div class="brand-sub">每半小时赛点，第一名优先进门</div>' +
+      '<div class="brand-sub">' + SLOGAN + '</div>' +
       '</div><div class="queue-pill">今晚号码<strong>' + state.queueNo + ' 号</strong></div></div>' +
       banner() +
       '<section class="paper">' +
       '<h2>排队时一直能玩</h2>' +
-      '<p class="muted">点一支箭，正前方没有挡住，它就会飞出棋盘。飞出越多，本队分越高。每半小时算一次赛点，分数最高的那一队，可以优先进门。</p>' +
+      '<p class="muted">点一支箭，正前方没有挡住，它就会飞出棋盘。带转角记号的箭，要先点一下转到能飞出的方向。每飞出一支箭，本队得 1 分。每一关有 2 分钟，消完进入下一关；时间到了就重来本关，已经拿到的分还在。每 1 分钟一个赛点，分数最高的队优先进门，然后分数清零，再比一轮。</p>' +
       '<label class="field">怎么称呼<input id="name-input" type="text" maxlength="12" placeholder="例如：小刚" value="' + escapeHtml(name) + '" /></label>' +
-      '<div class="field">选一个队</div>' +
+      '<label class="field">给队伍起个名，或加入已有的队<input id="team-input" type="text" maxlength="' + TEAM_MAX + '" placeholder="最多 ' + TEAM_MAX + ' 个字" value="' + escapeHtml(team) + '" /></label>' +
+      (state.teamHint ? '<p class="muted" id="team-hint" style="color:#9c2b1a;margin-top:6px;">' + escapeHtml(state.teamHint) + "</p>" : "") +
+      '<div class="field">今晚已经有这些队，点一下就加入</div>' +
       '<div class="team-grid" id="team-grid">' +
-      CITY_TEAMS.map(function (t) {
+      loadOpenTeams().map(function (t) {
         return '<button type="button" class="team-chip' + (t === team ? ' selected' : '') + '" data-team="' + escapeHtml(t) + '">' + t + '</button>';
       }).join("") +
       '</div>' +
-      '<label class="field">或自己起个队名<input id="custom-team" type="text" maxlength="8" placeholder="四个字以内" /></label>' +
       '<button type="button" class="btn-main" id="btn-join">开始消除</button>' +
-      '<button type="button" class="btn-ghost" id="btn-fast">演示赛点（约 1 分钟）</button>' +
+      '<button type="button" class="btn-ghost" id="btn-fast">演示本关倒计时（20 秒）</button>' +
       '</section>' +
       '<p class="muted" style="color:#e8c48a;text-align:center;font-size:12px;">这是样稿，优先进门和券都不能当真办理。<br>门口大屏：同一网址后加 ?screen</p>' +
       '</div>';
@@ -578,6 +737,8 @@
     var me = playerTeam();
     var ms = remainMs();
     var urgent = ms > 0 && ms <= 10000;
+    var lvMs = levelRemainMs();
+    var lvUrgent = lvMs > 0 && lvMs <= 10000;
     var cells = "";
     var r, c, cell, cls, inner, can;
     for (r = 0; r < board.size; r++) {
@@ -585,13 +746,14 @@
         cell = at(board, r, c);
         can = cell.type === "arrow" && isClearable(board, r, c);
         cls = "cell " + cell.type;
+        if (cell.turn) cls += " turn";
         if (can && spec.hintClearable) cls += " clearable";
         inner = "";
-        if (cell.type === "arrow") inner = arrowSvg(cell.dir);
+        if (cell.type === "arrow") inner = arrowSvg(cell.dir, cell.turn);
         if (cell.type === "block") inner = jarSvg();
         cells += '<button type="button" class="' + cls + '" data-r="' + r + '" data-c="' + c + '"' +
           (can ? ' data-clearable="1"' : "") +
-          ' aria-label="' + (cell.type === "arrow" ? cell.dir : cell.type) + '">' + inner + "</button>";
+          ' aria-label="' + (cell.type === "arrow" ? (cell.turn ? "转箭 " : "") + cell.dir : cell.type) + '">' + inner + "</button>";
       }
     }
     return '<div class="phone-shell">' +
@@ -600,6 +762,8 @@
       '<div class="clock' + (urgent ? " urgent" : "") + '"><div class="lab">距下一次赛点</div><div class="time js-clock">' + formatTime(ms) + "</div></div>" +
       '<div class="score-pill">本队<strong id="my-score">' + (me ? me.score : 0) + "</strong></div>" +
       "</div>" +
+      '<div class="level-clock' + (lvUrgent ? " urgent" : "") + '"><div class="lab">本关剩余</div><div class="time js-level-clock">' + formatTime(lvMs) + "</div></div>" +
+      '<div class="priority-line">' + SLOGAN + "</div>" +
       banner() +
       '<div class="board-wrap"><div class="board" id="board" data-level="' + state.level + '" data-size="' + board.size + '" data-blockers="' + spec.blockers + '" style="grid-template-columns:repeat(' + board.size + ',1fr)">' + cells + "</div></div>" +
       (state.stuckHint ? '<button type="button" class="btn-ghost" id="btn-shuffle" style="color:#e8c48a">前面都挡住了，重新摆一摆</button>' : "") +
@@ -619,7 +783,7 @@
     var list = rec.teams;
     var winner = rec.winner;
     var playerWon = rec.playerWon;
-    var prize = playerWon ? "本队今晚赢了" : ("今晚第一名是" + escapeHtml(winner));
+    var prize = playerWon ? "本队这轮赢了" : ("这轮第一名是" + escapeHtml(winner));
     var rows = list.map(function (t, i) {
       var win = i === 0 ? " winner" : "";
       var tag = i === 0 ? '<span class="tag">优先进门</span>' : "";
@@ -627,7 +791,7 @@
         escapeHtml(t.name) + (t.isPlayer ? " · 本队" : "") + tag + "</div><strong>" + t.score + "</strong></div>";
     }).join("");
     return '<div class="phone-shell">' +
-      '<div class="topbar"><div><div class="brand-kicker">赛点到了</div><h1 class="brand-title">消得多 先进门</h1><div class="brand-sub">第一名优先进门</div></div>' +
+      '<div class="topbar"><div><div class="brand-kicker">赛点到了</div><h1 class="brand-title">消得多 先进门</h1><div class="brand-sub">' + SLOGAN + "</div></div>" +
       '<div class="queue-pill">本队第<strong>' + (list.findIndex(function (t) { return t.isPlayer; }) + 1 || "—") + "</strong></div></div>" +
       banner() +
       '<section class="paper"><h2>本轮成绩</h2><div class="rank-list">' + rows + "</div></section>" +
@@ -644,7 +808,7 @@
       '<div class="called-hero"><div class="no">' + state.queueNo + ' 号</div>' +
       "<p>号到了，先去店里听歌吧。<br/>这一轮的分数先记在这里。</p></div>" +
       '<section class="paper"><h2>本队此刻第 ' + rank + "</h2>" +
-      '<p class="muted">如果赛点还没到，优先进门要等本轮结算。进门后把样稿券给店里看就行。</p></section>' +
+      '<p class="muted">优先进门要等每分钟的赛点结算。进门后把样稿券给店里看就行。</p></section>' +
       couponCard(false) +
       '<button type="button" class="btn-main" id="btn-again">回到门口再玩</button>' +
       "</div>";
@@ -654,15 +818,16 @@
     var live = state && state.teams && state.teams.length;
     var list = live ? sortedTeams() : [];
     var max = Math.max(1, Math.max.apply(null, list.map(function (t) { return t.score; }).concat([1])));
-    var ms = remainMs();
     var nowLine = "门口电视样稿";
     var nowBig = "等候开局";
+    var ms = remainMs();
     if (!live) {
-      nowLine = "把手机样稿打开后，这边会同步比分和倒计时";
+      nowLine = "把手机样稿打开后，这边会同步比分和赛点";
       nowBig = "还没有进行中的一局";
     } else if (state.view === "play") {
       var sz = state.size || (state.board && state.board.size) || 0;
       nowLine = "第 " + state.level + " 关" + (sz ? " · 棋盘 " + sz + "×" + sz : "");
+      if (state.levelEndsAt) nowLine += " · 本关剩余 <span class=\"js-level-clock\">" + formatTime(levelRemainMs()) + "</span>";
       nowBig = "正在门口消除，飞出越多分越高";
     } else if (state.view === "settle" && state.lastSettle) {
       nowLine = "赛点到了";
@@ -674,21 +839,23 @@
       nowLine = "客人正在扫码入队";
       nowBig = "消得多 先进门";
     }
-    var board = live ? '<div class="bars">' + list.map(function (t) {
+    var showTag = !!(live && state.view === "settle");
+    var board = live ? '<div class="bars">' + list.map(function (t, i) {
       var w = Math.round((t.score / max) * 100);
-      return '<div class="bar-row"><div class="name' + (t.isPlayer ? " me" : "") + '">' + escapeHtml(t.name) +
-        (t.isPlayer ? " · 本队" : "") + '</div><div class="bar-track"><div class="bar-fill" style="width:' + w +
+      var tag = showTag && i === 0 ? '<span class="tag">优先进门</span>' : "";
+      return '<div class="bar-row' + (i === 0 ? " lead" : "") + '"><div class="name' + (t.isPlayer ? " me" : "") + '">' + escapeHtml(t.name) +
+        (t.isPlayer ? " · 本队" : "") + tag + '</div><div class="bar-track"><div class="bar-fill" style="width:' + w +
         '%"></div></div><div class="pts">' + t.score + "</div></div>";
     }).join("") + "</div>" : '<div class="idle-actions" style="text-align:center"><p class="muted" style="color:#e8c48a;margin-bottom:12px;">若只想先看大屏，可以开一局演示。</p><button type="button" class="btn-main" id="btn-demo" style="max-width:280px;margin:0 auto">演示大屏</button></div>';
 
     return '<div class="screen"><div class="screen-head"><div>' +
       '<div class="brand-kicker">大冰的小屋 · 烟台山分舵</div>' +
       "<h1>消得多 先进门</h1>" +
-      '<div class="brand-sub">每半小时赛点，第一名优先进门</div></div>' + banner() + "</div>" +
+      '<div class="brand-sub">' + SLOGAN + "</div></div>" + banner() + "</div>" +
       '<div class="screen-clock' + (ms > 0 && ms <= 10000 ? " urgent" : "") + '"><div class="lab">距下一次赛点</div><div class="time js-clock">' + formatTime(ms) + "</div></div>" +
       '<div class="screen-now">' + nowLine + '<span class="big">' + escapeHtml(nowBig) + "</span></div>" +
       board +
-      '<div class="screen-foot"><span>哪队消得最多，赛点后优先进门</span><span>' +
+      '<div class="screen-foot"><span>' + SLOGAN + "</span><span>" +
       (live ? "今晚号码 " + state.queueNo + " 号也在场" : "样稿：其他队为模拟") + "</span></div></div>";
   }
 
@@ -705,15 +872,30 @@
     if (nameInput) {
       nameInput.addEventListener("input", function () { state.playerName = nameInput.value; });
     }
+    var teamInput = document.getElementById("team-input");
+    if (teamInput) {
+      teamInput.addEventListener("input", function () {
+        state.teamName = teamInput.value;
+        state.teamHint = "";
+        var chips = document.querySelectorAll("#team-grid [data-team]");
+        var cur = normalizeTeamName(teamInput.value);
+        chips.forEach(function (btn) {
+          btn.classList.toggle("selected", btn.getAttribute("data-team") === cur);
+        });
+      });
+    }
     var grid = document.getElementById("team-grid");
     if (grid) {
       grid.addEventListener("click", function (e) {
         var btn = e.target.closest("[data-team]");
         if (!btn) return;
         state.teamName = btn.getAttribute("data-team");
+        state.teamHint = "";
         render();
         var again = document.getElementById("name-input");
         if (again) again.value = state.playerName || "";
+        var tIn = document.getElementById("team-input");
+        if (tIn) tIn.value = state.teamName || "";
       });
     }
     var join = document.getElementById("btn-join");
@@ -722,7 +904,7 @@
     if (fast) fast.addEventListener("click", function () { begin(true); });
     var demo = document.getElementById("btn-demo");
     if (demo) demo.addEventListener("click", function () {
-      startPlay("演示", "路上队", true);
+      startPlay("演示", "路过的", true);
     });
     var board = document.getElementById("board");
     if (board) {
@@ -744,14 +926,13 @@
     if (next) next.addEventListener("click", nextRound);
     var again = document.getElementById("btn-again");
     if (again) again.addEventListener("click", function () {
-      var keep = { queueNo: state.queueNo, playerName: state.playerName, teamName: state.teamName, fast: state.fast, fastMs: state.fastMs };
+      var keep = { queueNo: state.queueNo, playerName: state.playerName, teamName: state.teamName, fast: state.fast };
       stopLoops();
       state = defaultState();
       state.queueNo = keep.queueNo;
       state.playerName = keep.playerName;
       state.teamName = keep.teamName;
       state.fast = keep.fast;
-      state.fastMs = keep.fastMs;
       publish();
       render();
     });
@@ -759,8 +940,17 @@
 
   function begin(fast) {
     var n = ((document.getElementById("name-input") || {}).value || state.playerName || "").trim() || "同路人";
-    var custom = ((document.getElementById("custom-team") || {}).value || "").trim();
-    var team = custom ? custom.slice(0, 8) : (state.teamName || "路上队");
+    var team = normalizeTeamName(((document.getElementById("team-input") || {}).value || state.teamName || ""));
+    if (!team) {
+      state.teamHint = "先给队伍起个名，或点一个已有的队";
+      render();
+      var tIn = document.getElementById("team-input");
+      if (tIn) tIn.focus();
+      return;
+    }
+    state.teamName = team;
+    state.teamHint = "";
+    rememberTeam(team);
     startPlay(n, team, fast);
   }
 
@@ -797,6 +987,12 @@
     publish();
     updateClockOnly();
   };
+  window.__xwSetLevelRemain = function (seconds) {
+    if (!state) return;
+    state.levelEndsAt = Date.now() + Math.max(0, seconds) * 1000;
+    publish();
+    updateClockOnly();
+  };
   window.__xwLevelSpec = levelSpec;
   window.__xwGenerateBoard = generateBoard;
   window.__xwGotoLevel = function (n) {
@@ -805,6 +1001,7 @@
     state.board = generateBoard(state.level);
     state.transitioning = false;
     state.stuckHint = listClearable(state.board).length === 0;
+    armLevelTimer();
     publish();
     render();
   };

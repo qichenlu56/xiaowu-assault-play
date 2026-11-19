@@ -20,13 +20,18 @@
 
 html, body {
   min-height: 100%;
+  min-height: 100vh;
+  min-height: 100dvh;
   background: var(--bg);
   color: var(--paper);
   font-family: var(--font);
   -webkit-font-smoothing: antialiased;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
 }
 
 body {
+  min-height: 100vh;
   min-height: 100dvh;
   background:
     radial-gradient(1200px 600px at 50% -10%, rgba(196, 92, 38, 0.22), transparent 60%),
@@ -47,7 +52,7 @@ body {
 #fly-layer { position: fixed; inset: 0; z-index: 20; pointer-events: none; overflow: hidden; }
 
 button, input { font-family: inherit; }
-button { cursor: pointer; border: 0; color: inherit; background: none; appearance: none; -webkit-appearance: none; }
+button { cursor: pointer; border: 0; color: inherit; background: none; appearance: none; -webkit-appearance: none; touch-action: manipulation; -webkit-tap-highlight-color: rgba(156, 43, 26, 0.18); }
 button:disabled { cursor: default; opacity: 0.55; }
 
 .sample-banner {
@@ -68,7 +73,9 @@ button:disabled { cursor: default; opacity: 0.55; }
 .phone-shell {
   width: min(430px, 100%);
   margin: 0 auto;
+  min-height: 100vh;
   min-height: 100dvh;
+  padding: 14px 16px calc(20px + constant(safe-area-inset-bottom));
   padding: 14px 16px calc(20px + env(safe-area-inset-bottom));
   display: flex;
   flex-direction: column;
@@ -193,6 +200,24 @@ input[type="text"] {
   color: var(--amber);
   text-align: center;
 }
+.level-clock {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 12px;
+  border: 1px solid rgba(232, 196, 138, 0.5);
+  border-radius: 14px;
+  padding: 8px 16px 10px;
+  background: rgba(0,0,0,0.28);
+}
+.level-clock .lab { font-size: 13px; letter-spacing: 0.16em; color: var(--gold); }
+.level-clock .time {
+  font-family: var(--display);
+  font-size: 36px;
+  line-height: 1;
+  color: #ffe7b0;
+}
+.level-clock.urgent .time { color: #ffb4a4; }
 .level-pill strong, .score-pill strong { display: block; font-size: 20px; color: var(--paper); }
 
 .board-wrap { display: flex; justify-content: center; }
@@ -220,6 +245,7 @@ input[type="text"] {
 .cell.empty { background: #cbb490; }
 .cell.block { background: #7a4a2a; }
 .cell.arrow { cursor: pointer; background: #f3e1c0; }
+.cell.arrow.turn { background: #f6d7b0; box-shadow: inset 0 0 0 1px rgba(156, 43, 26, 0.35); }
 .cell.arrow:active { transform: scale(0.94); }
 .cell.arrow.clearable { box-shadow: inset 0 0 0 2px rgba(156, 43, 26, 0.7), 0 0 0 1px rgba(212, 160, 90, 0.5); }
 .cell.flying { visibility: hidden; }
@@ -380,7 +406,8 @@ body.screen-mode { overflow: hidden; }
 .screen-now { text-align: center; color: var(--amber); font-size: clamp(18px, 2.4vw, 28px); }
 .screen-now .big { display: block; margin-top: 4px; color: var(--paper); font-family: var(--display); font-size: clamp(26px, 3.6vw, 44px); }
 .bars { display: flex; flex-direction: column; justify-content: center; gap: 14px; }
-.bar-row { display: grid; grid-template-columns: 140px 1fr 110px; gap: 16px; align-items: center; }
+.bar-row { display: grid; grid-template-columns: minmax(170px, 22vw) 1fr 90px; gap: 16px; align-items: center; }
+.bar-row .name { white-space: nowrap; }
 .bar-row .name { font-size: 24px; }
 .bar-row .name.me { color: #ffe7b0; }
 .bar-track { height: 28px; background: rgba(255,255,255,0.06); border: 1px solid rgba(232, 196, 138, 0.2); border-radius: 999px; overflow: hidden; }
@@ -394,4 +421,43 @@ body.screen-mode { overflow: hidden; }
   .bar-row .name { font-size: 16px; }
   .bar-row .pts { font-size: 18px; }
   .screen-head h1 { font-size: 36px; }
+}
+
+.priority-line {
+  text-align: center;
+  color: var(--gold);
+  letter-spacing: 0.14em;
+  font-size: 14px;
+  line-height: 1.5;
+}
+.mini-board .tag {
+  display: inline-block;
+  margin-left: 4px;
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  border: 1px solid var(--gold);
+  color: var(--gold);
+  border-radius: 999px;
+  padding: 0 6px;
+  vertical-align: middle;
+}
+.screen-priority {
+  text-align: center;
+  font-family: var(--display);
+  font-size: clamp(28px, 4.2vw, 48px);
+  color: #ffe7b0;
+  letter-spacing: 0.12em;
+  line-height: 1.2;
+}
+.bar-row.lead .name { color: #ffe7b0; }
+.bar-row .tag {
+  display: inline-block;
+  margin-left: 6px;
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  border: 1px solid var(--gold);
+  color: var(--gold);
+  border-radius: 999px;
+  padding: 1px 8px;
+  vertical-align: middle;
 }
